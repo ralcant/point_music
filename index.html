@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css" type="text/css" />
+    <!-- <script src="//js.leapmotion.com/leap-1.1.0.min.js"></script> -->
+    <!-- <script src="//js.leapmotion.com/leap-plugins-0.1.8.js"></script> -->
+
+    <!-- <script src="//js.leapmotion.com/0.2.2/leap.js"></script> -->
+
+    <script type="text/javascript" src="lib/leap.min.js"></script>
+    <script type="text/javascript" src="lib/leap-plugins.min.js"></script>
+    <script type="text/javascript" src="lib/underscore.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+    <script type="module" src="setupSpeech.js"></script>
+    <script type="module" src="setupLeap.js"></script>
+    <script type="module" src="sound.js"></script>
+    <script type="module" src="main.js"></script>
+
+    <!-- <script src=""> -->
+  </head>
+  <body>
+    <h1>Point Music</h1>
+    <div id="main"></div>
+    <div id="speechFeedbackContainer">
+      <strong>Speech detected:</strong>
+      <span id="speechFeedback"></span>
+    </div>
+    <span id="leapFeedback"></span>
+    <strong id="stateFeedback">Say 'start' to begin</strong>
+    <section id="instructions">
+      <h3>Tasks</h3>
+      <ol>
+        <li>Make the sound "We think we know you"</li>
+        <li>Create any cool sound using the 3 audios</li>
+      </ol>
+    </section>
+    <div id="side-container">
+      <div class="side-item" id="item-first">
+        <strong>Left</strong>We think you've changed bro
+      </div>
+      <div class="side-item" id="item-second">
+        <strong>Middle</strong>We know best
+      </div>
+      <div class="side-item" id="item-third">
+        <strong>Right</strong>You suck
+      </div>
+    </div>
+    <!-- 
+    <button play-audio="first">Play first</button>
+    <button play-audio="second">Play second</button>
+    <button play-audio="third">Play third</button>
+    <br />
+    <button pause-audio="first">Pause first</button>
+    <button pause-audio="second">Pause second</button>
+    <button pause-audio="third">Pause third</button> -->
+  </body>
+</html>
