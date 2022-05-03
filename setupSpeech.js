@@ -3,7 +3,7 @@
 /*****************************************************************/
 import { processSpeech } from "./main.js";
 
-let DEBUGSPEECH = true;
+let DEBUGSPEECH = false;
 let soundFeedback = document.getElementById("speechFeedback");
 let debouncedProcessSpeech = _.debounce(processSpeech, 500);
 

@@ -6,16 +6,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
     <link rel="stylesheet" href="style.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="lib/famous.css" />
+
     <!-- <script src="//js.leapmotion.com/leap-1.1.0.min.js"></script> -->
     <!-- <script src="//js.leapmotion.com/leap-plugins-0.1.8.js"></script> -->
 
     <!-- <script src="//js.leapmotion.com/0.2.2/leap.js"></script> -->
+    <script type="text/javascript" src="lib/famous.min.js"></script>
 
     <script type="text/javascript" src="lib/leap.min.js"></script>
     <script type="text/javascript" src="lib/leap-plugins.min.js"></script>
     <script type="text/javascript" src="lib/underscore.min.js"></script>
+    <script type="text/javascript" src="lib/backbone.min.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+
+    <script type="module" src="config.js"></script>
+    <script type="module" src="setupUI.js"></script>
     <script type="module" src="setupSpeech.js"></script>
     <script type="module" src="setupLeap.js"></script>
     <script type="module" src="sound.js"></script>
@@ -25,21 +32,48 @@
   </head>
   <body>
     <h1>Point Music</h1>
+    <span><strong id="stateFeedback"></strong></span>
+
     <div id="main"></div>
-    <div id="speechFeedbackContainer">
+    <!-- <div id="speechFeedbackContainer">
       <strong>Speech detected:</strong>
       <span id="speechFeedback"></span>
+    </div> -->
+    <!-- <span id="leapFeedback"></span> -->
+    <div id="chooseState" visible-state="choose"></div>
+    <div class="instructions" visible-state="choose">
+      <strong>Available speech commands:</strong>
+      <ul>
+        <li>"Play i" -> play audio #i</li>
+        <li>"Select i" -> select audio #i</li>
+        <li>"Delete i" -> unselect audio #i</li>
+        <li>"Record" -> Records from microphone (only 2s)</li>
+        <li>"Continue" -> Go to the next phase</li>
+      </ul>
     </div>
-    <span id="leapFeedback"></span>
-    <strong id="stateFeedback">Say 'start' to begin</strong>
-    <section id="instructions">
+    <div class="instructions" visible-state="arrange">
+      <strong>Available speech commands:</strong>
+      <ul>
+        <li>"More" -> Increases size of selected box</li>
+        <li>"Less" -> Decreases size of selected box</li>
+        <li>"Continue" -> Go to the next phase</li>
+      </ul>
+    </div>
+    <div class="instructions" visible-state="compose">
+      <strong>Available speech commands:</strong>
+      <ul>
+        <li>"End" -> To finish</li>
+      </ul>
+    </div>
+    <!-- <section id="instructions">
       <h3>Tasks</h3>
       <ol>
         <li>Make the sound "We think we know you"</li>
         <li>Create any cool sound using the 3 audios</li>
       </ol>
-    </section>
-    <div id="side-container">
+    </section> -->
+
+    <!-- <div id="side-container">
       <div class="side-item" id="item-first">
         <strong>Left</strong>We think you've changed bro
       </div>
@@ -49,7 +83,8 @@
       <div class="side-item" id="item-third">
         <strong>Right</strong>You suck
       </div>
-    </div>
+    </div> -->
+
     <!-- 
     <button play-audio="first">Play first</button>
     <button play-audio="second">Play second</button>

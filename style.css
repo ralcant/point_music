@@ -24,7 +24,7 @@ body {
   height: 50vh;
   background-color: white;
 }
-#instructions {
+#stateFeedback {
   position: absolute;
   right: 0;
   top: 0;
@@ -42,4 +42,25 @@ body {
 .side-item-chosen {
   background-color: yellow;
   opacity: 0.7;
+}
+
+#chooseState:not(.hidden) {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+.instructions:not(.hidden) {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  border: 2px solid black;
+  background-color: white;
+  z-index: 999;
+  position: absolute;
+  bottom: 0;
+  font-size: 0.8em;
+  /* width: 100%; */
+}
+.hidden {
+  display: none;
 }

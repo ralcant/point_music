@@ -21,6 +21,24 @@ buttonPausers.forEach((button) => {
     pauseAudio(val);
   });
 });
+let allSounds = [];
+let currentIndex = null; //index of the current audio playing
+function createSounds(audioPaths) {
+  for (let [i, audioPath] of audioPaths.entries()) {
+    let sound = new Howl({
+      src: audioPath,
+      // onend: () => {
+      //   currentIndex = null;
+      // },
+    });
+    allSounds.push(sound);
+  }
+  return allSounds;
+}
+function resetSound() {
+  allSounds = [];
+  currentIndex = null;
+}
 let sound = new Howl({
   src: "assets/rickroll_10s.mp3",
   sprite: {
@@ -39,22 +57,50 @@ let sound = new Howl({
 //   },
 // });
 
-function playAudio(audioName) {
-  //pause everything else
-  sound.stop();
+function playAudioFromIndex(audioIndex) {
+  //If something's playing, stop it
+  if (currentIndex === null && audioIndex !== null) {
+    console.log("Just started - playing");
+    allSounds[audioIndex].play();
+    currentIndex = audioIndex;
+  }
+  // if (currentIndex !== null && currentIndex === audioIndex && !allSounds[currentIndex].isPlaying()) {
+  //   console.log("")
+  //   allSounds[audioIndex].stop();
+  // }
+  if (audioIndex === null) {
+    if (currentIndex != null && allSounds[currentIndex].playing()) {
+      allSounds[currentIndex].stop();
+    }
+    currentIndex = null;
+  }
+  // if (
+  //   currentIndex != null &&
+  //   (currentIndex === audioIndex || audioIndex === null)
+  // ) {
+  //   allSounds[currentIndex].stop();
+  // }
+
+  // if (currentIndex && currentIndex != audioIndex) {
+  //   allSounds[currentIndex].stop();
+  // }
   //   for (let name of ["first", "second", "third"]) {
   //     // console.log(name);
   //     pauseAudio(name);
   //   }
-  for (let button of Object.values(BUTTONS)) {
-    button.classList.remove("side-item-chosen");
-  }
-  BUTTONS[audioName].classList.add("side-item-chosen");
-  sound.play(audioName);
+  // for (let button of Object.values(BUTTONS)) {
+  //   button.classList.remove("side-item-chosen");
+  // }
+  // BUTTONS[audioName].classList.add("side-item-chosen");
+  // sound.play(audioName);
+
+  // TODO: Set audioIndex to null when audio has finished playing
+  // allSounds[audioIndex].play();
+  // currentIndex = audioIndex;
 }
 
 function pauseAudio(audioName) {
   sound.stop(audioName);
 }
 
-export { playAudio };
+export { playAudioFromIndex, createSounds, resetSound };
