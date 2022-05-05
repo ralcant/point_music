@@ -1,4 +1,4 @@
-import { playAudioFromIndex } from "./sound.js";
+import { playAudioFromIndex, playPhraseAudioFromIndex } from "./sound.js";
 import { handlekeyTap, gameState } from "./main.js";
 import {
   cursor,
@@ -10,6 +10,8 @@ import {
 import { Colors, DIRECTION_NAMES, GRAB_THRESHOLD } from "./config.js";
 
 let leapFeedback = document.getElementById("leapFeedback");
+let lastHoveredTime = 0; //Date.now() when first hovered (to check that )
+let UNHOVERED_THRESHOLD = 2000; // Time (in miliseconds) the user can hover outside before it resets
 let LEAPSCALE = 0.6;
 let options = { enableGestures: true };
 let DIRECTION_AUDIO_MAPPING = {
@@ -34,9 +36,14 @@ function resetLeap() {
 
 let currString = "";
 let lastDirection = null;
+/**
+ *
+ * @param {*} theta angle
+ * @returns a number from [0, len-1], laying room for "unselected"
+ */
 function getDirectionFromAngle(theta) {
-  let i = Math.floor((theta / 180) * DIRECTION_NAMES.length);
-  return i;
+  let i = Math.floor((theta / 180) * 2 * DIRECTION_NAMES.length);
+  return i % 2 === 0 ? Math.floor(i / 2) : null;
 }
 function handleFrame(frame) {
   //   console.log("Frame detected!");
@@ -56,19 +63,86 @@ function handleHand(hand) {
   if (gameState.get("state") === "choose") {
     return;
   }
+  let entered = Date.now();
   //   console.log("Hand detected!");
   //   console.log(hand);
   // Drawing cursor
   unhighlightAllBoxes();
-  let pos = hand.screenPosition();
-  let x = pos[0];
-  let y = pos[1];
-  let cursorPosition = [x, y + 400];
-  cursor.setScreenPosition(cursorPosition);
 
-  if (gameState.get("state") === "arrange") {
+  let pos = hand.screenPosition();
+  // let x = pos[0];
+  // let y = pos[1];
+  // console.log(pos);
+  let x = pos[0];
+  let y = pos[2];
+  let cursorPosition = [x, y]; //[x * 2, y * 2]; // + 400];
+  cursor.setScreenPosition(cursorPosition);
+  cursorPosition = cursor.get("screenPosition"); // now it's average
+  // console.log(cursor.get("history"));
+  if (gameState.get("state") === "play") {
+    // let indexFinger = hand.indexFinger;
+    // let [tipX, tipY, tipZ] = indexFinger.tipPosition;
+    // let [carpX, carpY, carpZ] = indexFinger.carpPosition;
+    // //   let [carpX, carpY, carpZ] = hand.sphereCenter;
+    // let dx = carpX - tipX;
+    // let dz = carpZ - tipZ; // (-) because z axis is pointing towards me, not away from
+    // let theta = (Math.atan2(dz, dx) * 180) / Math.PI; //in radians
+    // let currDirection = getDirectionFromAngle(theta);
+    // //make sure the hand is on the direction of the leap (angle 0-180)
+    // if (currDirection < 0 || currDirection >= 3) {
+    //   return;
+    // }
+    // if (currDirection !== lastDirection) {
+    //   playPhraseAudioFromIndex(currDirection);
+    //   // return; //
+    // }
+    // //TODO: Move this part to main.js
+    // //new direction found, play new sound
+    // lastDirection = currDirection;
+    // let directionName = DIRECTION_NAMES[lastDirection];
+    // // console.log(`Detected ${theta} ( ${directionName})`);
+    // let highlightColor = Colors.BLACK;
+    // if (lastDirection !== null) {
+    //   highlightBox(lastDirection, highlightColor);
+    // }
+    let highlightColor = Colors.BLACK;
+    let intersection = getIntersectingBox(cursor);
+    //If unhovered for too long, de-select any speech audio in the UI
+    if (intersection) {
+      // console.log("Found intersection, highlight it");
+      let { intersectingBox, i } = intersection;
+      highlightBox(i, highlightColor);
+    } else {
+      if (
+        selectedBox === null &&
+        entered - lastHoveredTime > UNHOVERED_THRESHOLD
+      ) {
+        console.log(entered - lastHoveredTime);
+        console.log("Too long");
+        gameState.setLastIndex(null);
+      }
+    }
+    // when hover, just call once
+    if (intersection && !selectedBox) {
+      let { intersectingBox, i } = intersection;
+      selectedBox = intersectingBox;
+      selectedBoxIndex = i;
+      //Play audio
+      playPhraseAudioFromIndex(selectedBoxIndex);
+    }
+    // if already called but no intersection anymore, reset
+    else if (!intersection && selectedBox !== null) {
+      //Remember time
+      console.log("Left hovering... storing time");
+      lastHoveredTime = Date.now();
+
+      selectedBoxIndex = null;
+      selectedBox = null;
+      playPhraseAudioFromIndex(selectedBoxIndex);
+    }
+  } else if (gameState.get("state") === "arrange") {
     //In arrange state we are able to drag the components around
-    let intersection = getIntersectingBox(cursorPosition);
+    let intersection = getIntersectingBox(cursor);
     let highlightColor = Colors.BLACK;
     if (intersection) {
       console.log("Found intersection, highlight it");
@@ -99,7 +173,7 @@ function handleHand(hand) {
       selectedBoxIndex = null;
     }
   } else if (gameState.get("state") === "compose") {
-    let intersection = getIntersectingBox(cursorPosition);
+    let intersection = getIntersectingBox(cursor);
     let highlightColor = Colors.YELLOW;
     if (intersection) {
       let { intersectingBox, i } = intersection;
@@ -110,6 +184,7 @@ function handleHand(hand) {
     } else {
       selectedBoxIndex = null;
     }
+    // Assumes that the box index is the same as the sound index
     playAudioFromIndex(selectedBoxIndex);
   }
 
@@ -146,10 +221,10 @@ controller.connect();
 // Emit gesture events before emitting frame events
 controller.addStep(function (frame) {
   //Don't process unless in processing state
-  if (frame.gestures.length > 0) {
-    console.log("Looking for gestures!");
-    console.log(frame.gestures.length);
-  }
+  // if (frame.gestures.length > 0) {
+  // console.log("Looking for gestures!");
+  // console.log(frame.gestures.length);
+  // }
   // 'choose' state doesn't involve Leap data
   if (gameState.get("state") === "choose") {
     return;

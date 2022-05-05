@@ -21,49 +21,98 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
 
-    <script type="module" src="config.js"></script>
-    <script type="module" src="setupUI.js"></script>
-    <script type="module" src="setupSpeech.js"></script>
-    <script type="module" src="setupLeap.js"></script>
-    <script type="module" src="sound.js"></script>
     <script type="module" src="main.js"></script>
+    <script type="module" src="sound.js"></script>
+    <script type="module" src="setupUI.js"></script>
+    <script type="module" src="setupLeap.js"></script>
+    <script type="module" src="setupSpeech.js"></script>
+    <script type="module" src="config.js"></script>
 
     <!-- <script src=""> -->
   </head>
-  <body>
-    <h1>Point Music</h1>
-    <span><strong id="stateFeedback"></strong></span>
-
+  <body class="hidden">
     <div id="main"></div>
     <!-- <div id="speechFeedbackContainer">
       <strong>Speech detected:</strong>
       <span id="speechFeedback"></span>
     </div> -->
     <!-- <span id="leapFeedback"></span> -->
-    <div id="chooseState" visible-state="choose"></div>
-    <div class="instructions" visible-state="choose">
-      <strong>Available speech commands:</strong>
-      <ul>
-        <li>"Play i" -> play audio #i</li>
-        <li>"Select i" -> select audio #i</li>
-        <li>"Delete i" -> unselect audio #i</li>
-        <li>"Record" -> Records from microphone (only 2s)</li>
-        <li>"Continue" -> Go to the next phase</li>
-      </ul>
-    </div>
-    <div class="instructions" visible-state="arrange">
-      <strong>Available speech commands:</strong>
-      <ul>
-        <li>"More" -> Increases size of selected box</li>
-        <li>"Less" -> Decreases size of selected box</li>
-        <li>"Continue" -> Go to the next phase</li>
-      </ul>
-    </div>
-    <div class="instructions" visible-state="compose">
-      <strong>Available speech commands:</strong>
-      <ul>
-        <li>"End" -> To finish</li>
-      </ul>
+
+    <!--Component that only takes up part of the screen-->
+    <div class="info" id="extraInfo">
+      <h1>Point Music</h1>
+      <span><strong id="stateFeedback"></strong></span>
+      <div visible-state="intro">
+        <p>What do you wanna do?</p>
+        <div class="intro-options">
+          <div id="optionPhrase">Play Phrase Maker</div>
+          <div id="optionMix">Mix some music</div>
+        </div>
+      </div>
+      <p visible-state="phraseArrange">Choose what box template you want.</p>
+      <p id="templateName" visible-state="phraseArrange"></p>
+      <div class="instructions" visible-state="intro">
+        <strong>Available speech commands:</strong>
+        <ul>
+          <li>"Play Phrase" -> Choose to play the Phrase Maker game</li>
+          <li>"Mix" -> Choose to create your own music</li>
+        </ul>
+      </div>
+      <div class="instructions" visible-state="phraseArrange">
+        <strong>Available speech commands:</strong>
+        <ul>
+          <li>"Next" -> Look at the next template</li>
+          <li>"Continue" -> Choose the current template</li>
+        </ul>
+      </div>
+      <div visible-state="play">
+        <span
+          ><strong>Task:</strong> Make this phrase with the sounds
+          available:</span
+        >
+        <p>
+          Mode:
+          <strong id="difficultyLevel">EASY</strong>
+        </p>
+      </div>
+      <div id="playPhraseContainer" visible-state="play"></div>
+      <div id="gameFeedback" visible-state="play"></div>
+      <div class="instructions" visible-state="play">
+        <strong>Available speech commands:</strong>
+        <ul>
+          <li>"Change mode" -> To switch between modes</li>
+          <li>"Another" -> to get another phrase</li>
+          <li>"End" -> To finish</li>
+        </ul>
+      </div>
+      <div id="chooseState" visible-state="choose"></div>
+      <div class="instructions" visible-state="choose">
+        <strong>Available speech commands:</strong>
+        <ul>
+          <li>"Play i" -> play audio #i</li>
+          <li>"Select i" -> select audio #i</li>
+          <li>"Delete i" -> unselect audio #i</li>
+          <li>"Record" -> Records from microphone (only 2s)</li>
+          <li>"Continue" -> Go to the next phase</li>
+        </ul>
+      </div>
+      <p visible-state="arrange">
+        Grab and drop boxes as you see fit! (hand over the LeapMotion)
+      </p>
+      <div class="instructions" visible-state="arrange">
+        <strong>Available speech commands:</strong>
+        <ul>
+          <li>"More" -> Increases size of selected box</li>
+          <li>"Less" -> Decreases size of selected box</li>
+          <li>"Continue" -> Go to the next phase</li>
+        </ul>
+      </div>
+      <div class="instructions" visible-state="compose">
+        <strong>Available speech commands:</strong>
+        <ul>
+          <li>"End" -> To finish</li>
+        </ul>
+      </div>
     </div>
     <!-- <section id="instructions">
       <h3>Tasks</h3>

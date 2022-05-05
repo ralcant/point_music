@@ -9,5 +9,6 @@ let Colors = {
 let DIRECTION_NAMES = ["Left", "Middle", "Right"];
 let GRAB_THRESHOLD = 0.8;
 let BOXSIZE = 200;
+let CURSORRADIUS = 100;
 
-export { Colors, DIRECTION_NAMES, GRAB_THRESHOLD, BOXSIZE };
+export { Colors, DIRECTION_NAMES, GRAB_THRESHOLD, BOXSIZE, CURSORRADIUS };

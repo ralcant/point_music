@@ -1,6 +1,9 @@
 body {
   background-color: lightgreen;
   font-size: 24px;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
 }
 #speechFeedbackContainer {
   position: absolute;
@@ -28,6 +31,7 @@ body {
   position: absolute;
   right: 0;
   top: 0;
+  /* border: 2px solid black; */
 }
 .side-item {
   border: 2px solid black;
@@ -63,4 +67,73 @@ body {
 }
 .hidden {
   display: none;
+}
+
+#playPhraseContainer {
+  background-color: white;
+  border: 2px solid block;
+  max-width: 300px;
+  display: flex;
+  flex-wrap: wrap;
+}
+.word {
+  margin: 3px;
+  opacity: 0.25;
+  background-color: yellow;
+  display: inline-block;
+  border: 2px solid black;
+  padding: 5px;
+}
+.word-spoken {
+  opacity: 1;
+}
+
+.info {
+  max-width: 30%;
+  flex-wrap: wrap;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  flex-direction: column;
+  background-color: white;
+  height: 100%;
+  text-align: center;
+}
+.full-screen {
+  max-width: 100%;
+}
+
+.win-phrase-feedback {
+  color: green;
+}
+/* .ongoing-phrase-feedback {
+  color: orange;
+} */
+.fail-phrase-feedback {
+  color: red;
+}
+
+.intro-options {
+  display: flex;
+  flex: 1;
+  height: 40vh;
+  width: 60vw;
+  align-items: center;
+  /* background-color: red; */
+}
+.intro-options * {
+  display: flex;
+  border: 2px solid black;
+  flex: 1;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  margin: 20px;
+  /* color: white; */
+  /* background-color: black; */
+  /* min-height: 100%; */
+}
+.option-chosen {
+  background-color: yellow;
 }

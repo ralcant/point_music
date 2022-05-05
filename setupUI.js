@@ -1,7 +1,7 @@
 // import { Engine, Surface, StateModifier, Modifier } from "famous/core";
 // import { famous } from "./lib/famous.min.js";
 // let famous = require("famous");
-import { Colors, BOXSIZE } from "./config.js";
+import { Colors, BOXSIZE, CURSORRADIUS } from "./config.js";
 import { Cursor, Board } from "./models.js";
 import { gameState } from "./main.js";
 import { selectedBoxIndex } from "./setupLeap.js";
@@ -9,11 +9,12 @@ import { selectedBoxIndex } from "./setupLeap.js";
 let Engine = famous.core.Engine;
 let Surface = famous.core.Surface;
 let Transform = famous.core.Transform;
+let ImageSurface = famous.surfaces.ImageSurface;
+
 let StateModifier = famous.modifiers.StateModifier;
 // let Draggable = famous.modifiers.Draggable;
 let Modifier = famous.core.Modifier;
 
-let CURSORSIZE = 20;
 let mainContext;
 function resetUI() {
   mainContext = null;
@@ -22,6 +23,7 @@ function resetUI() {
   modifiers = [];
   board;
   boxObjects = [];
+  playPhraseContainer.innerHTML = "";
 }
 function placeBox(box) {
   let success = board.deployBox(box);
@@ -55,7 +57,8 @@ function unhighlightAllBoxes() {
     boxObject.setProperties({ backgroundColor: Colors.GREY });
   });
 }
-function getIntersectingBox(screenPosition) {
+function getIntersectingBox(cursor) {
+  let screenPosition = cursor.get("screenPosition");
   let intersectingBox = null;
   let allBoxes = board.get("boxes");
   for (let i = 0; i < allBoxes.length; i++) {
@@ -69,20 +72,27 @@ function getIntersectingBox(screenPosition) {
       y1: boxPos[1],
       y2: boxPos[1] + h,
     };
-    if (
-      bbox.x1 <= screenPosition[0] &&
-      bbox.x2 >= screenPosition[0] &&
-      bbox.y1 <= screenPosition[1] &&
-      bbox.y2 >= screenPosition[1]
-    ) {
-      //Intersection!
+    if (cursor.overlaps(boxPos, [w, h])) {
       intersectingBox = songBox;
       return { intersectingBox, i };
     }
+    // if (
+    //   bbox.x1 <= screenPosition[0] &&
+    //   bbox.x2 >= screenPosition[0] &&
+    //   bbox.y1 <= screenPosition[1] &&
+    //   bbox.y2 >= screenPosition[1]
+    // ) {
+    //   //Intersection!
+    //   intersectingBox = songBox;
+    //   return { intersectingBox, i };
+    // }
   }
 }
 let cursor = new Cursor();
-let gridOrigin = [300, 35];
+let gridOrigin = [333, 35];
+//TODO: Calculate in function of viewport's width and height
+let boxViewSize = [1000, 500]; //w, h
+console.log(boxViewSize);
 let boxes = [];
 let modifiers = [];
 let board;
@@ -136,11 +146,42 @@ function test(mainContext) {
     boxObjects.push(box);
   });
 }
-function setupBoxesUI() {
+function drawCursor(center) {
+  //Draw the cursor (with image)
+  let cursorSurface = new ImageSurface({
+    size: [2 * CURSORRADIUS, 2 * CURSORRADIUS],
+    content: "assets/images/hand3.png",
+    properties: {
+      backgroundColor: "white",
+      borderRadius: CURSORRADIUS + "px",
+      pointerEvents: "none",
+      zIndex: 1,
+    },
+  });
+  // Draw the cursor (only a circle)
+  // let cursorSurface = new Surface({
+  //   size: [2 * CURSORRADIUS, 2 * CURSORRADIUS],
+  //   properties: {
+  //     backgroundColor: "white",
+  //     borderRadius: CURSORRADIUS + "px",
+  //     pointerEvents: "none",
+  //     zIndex: 1,
+  //   },
+  // });
+  let cursorOriginModifier = new StateModifier({ origin: [0.5, 0.5] });
+  let cursorModifier = new Modifier({
+    transform: function () {
+      var cursorPosition = this.get("screenPosition");
+      return Transform.translate(cursorPosition[0], cursorPosition[1], 0);
+    }.bind(cursor),
+  });
+  mainContext.add(cursorOriginModifier).add(cursorModifier).add(cursorSurface);
+  cursor.setScreenPosition(center);
+}
+function setupBoxesUI(songs) {
   mainContext = Engine.createContext();
 
   // First: Add the songs
-  let songs = gameState.get("songs");
   board = new Board({ songs });
   board.get("boxes").forEach((songBox) => {
     //TODO: Make this a CSS Class
@@ -169,25 +210,6 @@ function setupBoxesUI() {
     mainContext.add(boxTranslateModifier).add(box);
     boxObjects.push(box);
   });
-
-  // Draw the cursor
-  let cursorSurface = new Surface({
-    size: [CURSORSIZE, CURSORSIZE],
-    properties: {
-      backgroundColor: "white",
-      borderRadius: CURSORSIZE / 2 + "px",
-      pointerEvents: "none",
-      zIndex: 1,
-    },
-  });
-  let cursorOriginModifier = new StateModifier({ origin: [0.5, 0.5] });
-  let cursorModifier = new Modifier({
-    transform: function () {
-      var cursorPosition = this.get("screenPosition");
-      return Transform.translate(cursorPosition[0], cursorPosition[1], 0);
-    }.bind(cursor),
-  });
-  mainContext.add(cursorOriginModifier).add(cursorModifier).add(cursorSurface);
   return;
 
   // let mainContext = Engine.createContext();
@@ -253,6 +275,8 @@ export {
   unhighlightAllBoxes,
   placeBox,
   gridOrigin,
+  boxViewSize,
   changeBoxSize,
   resetUI,
+  drawCursor,
 };
