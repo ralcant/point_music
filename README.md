@@ -28,3 +28,5 @@ Here's a breakdown of the different files and folders in this repository, and wh
 ## Note
 
 As mentioned in the paper, the Speech Recognition doesn't work super well, so sometimes you may need to speak a bit louder for a speech command to work. If it's any help, any time the Speech Recognition processes a transcript, this will get logged on the console.
+
+Also, the hope is that every time you go from Phrase Maker or Music Mix to the intro page then everything that should be resetted gets resetted. However, if at any time something doesn't quite seem to make sense, it might be a bug and so you may want to Hard refresh (Click refresh while pressing Shift) and go to the option you want.

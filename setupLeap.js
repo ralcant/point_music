@@ -118,8 +118,8 @@ function handleHand(hand) {
         selectedBox === null &&
         entered - lastHoveredTime > UNHOVERED_THRESHOLD
       ) {
-        console.log(entered - lastHoveredTime);
-        console.log("Too long");
+        // console.log(entered - lastHoveredTime);
+        // console.log("Too long");
         gameState.setLastIndex(null);
       }
     }
@@ -172,6 +172,7 @@ function handleHand(hand) {
       // Assumes that the box index is the same as the sound index
       playAudioFromIndex(selectedBoxIndex);
     } else {
+      let intersection = getIntersectingBox(cursor);
       // Need to check if it's grabbing
       let isGrabbing = hand.grabStrength > GRAB_THRESHOLD; //TODO: Also allow pinching?
 

@@ -197,6 +197,8 @@ function reset() {
   optionMix.classList.remove("option-chosen");
   areBoxesReady = false;
   document.body.removeAttribute("mix-mode");
+  gameState.set("areBoxesReady", false);
+  mixMode.innerHTML = "Dragging boxes";
 
   updateChooseUI();
   resetUI();
@@ -547,7 +549,7 @@ function processSpeech(transcript) {
     return processed;
   }
 
-  console.log(gameState.get("state"));
+  // console.log(gameState.get("state"));
   if (gameState.get("state") === "intro") {
     if (userSaid(["play", "phrase", "maker"])) {
       optionPhrase.classList.add("option-chosen");
