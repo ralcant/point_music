@@ -82,6 +82,11 @@ function record(filename) {
   return recordedChunks;
 }
 
+/**
+ * Doesn't work :(
+ * @param {*} filename
+ * @returns
+ */
 function recordFromBrowser(filename) {
   let audioContext = new AudioContext();
   let streamDest = audioContext.createMediaStreamDestination();
