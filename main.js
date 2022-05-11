@@ -6,12 +6,19 @@ import {
   changeBoxSize,
   resetUI,
   drawCursor,
+  addSongUI,
+  board,
 } from "./setupUI.js";
 import { createSounds, createPhraseSounds, resetSound } from "./sound.js";
 import { DIRECTION_NAMES, BOXSIZE, CURSORRADIUS } from "./config.js";
 import { GameState } from "./models.js";
 import { resetLeap } from "./setupLeap.js";
-import { record, stopRecording, resetRecord } from "./record.js";
+import {
+  record,
+  stopRecording,
+  resetRecord,
+  recordFromBrowser,
+} from "./record.js";
 
 // let SETUP_STATE = "setup";
 // let PROCESSING_STATE = "processing";
@@ -42,9 +49,11 @@ let currentSongs = [
   { displayName: "Ba", audioPath: "assets/ba.mp3" },
   { displayName: "Dum", audioPath: "assets/dum.mp3" },
   { displayName: "Tss", audioPath: "assets/tss.mp3" },
+  { displayName: "Rickroll", audioPath: "assets/rickroll_10s.mp3" },
 ];
 // 1-indexed
 let chosenIndices = [];
+let areBoxesReady = false;
 //TODO: Make it an initialize function
 //TODO: Only for testing purposes
 
@@ -186,6 +195,8 @@ function reset() {
   difficultyLevel.innerText = "EASY";
   optionPhrase.classList.remove("option-chosen");
   optionMix.classList.remove("option-chosen");
+  areBoxesReady = false;
+  document.body.removeAttribute("mix-mode");
 
   updateChooseUI();
   resetUI();
@@ -198,7 +209,10 @@ function reset() {
 function removeAllBoxes() {
   console.log("removing all boxes...");
   //TODO: Figure out if there is a better way, maybe using the mainContext variable from setupUI.js
-  document.querySelector(".famous-container").remove();
+  let container = document.querySelector(".famous-container");
+  if (container) {
+    container.remove();
+  }
 }
 function handlekeyTap() {
   // let directionName = DIRECTION_NAMES[lastDirection];
@@ -262,26 +276,44 @@ function sendCurrentPhraseSongs() {
   templateName.innerText = currentTemplate.displayName;
   setupBoxesUI(songs);
 }
+
 /**
- * Only in choose state, going to arrange state
  * Draws the chosen songs (defined by chosenIndices)
+ * and updates
+ * Resets everything (UI + sounds)
+ *
+ * Assumes at most 9 chosen indices
  */
-function sendCurrentSongs() {
+function sendCurrentSongs(shouldDrawCursor = true) {
+  removeAllBoxes();
   let songs = [];
   for (let [i, songIndex] of chosenIndices.entries()) {
-    console.log(songIndex);
-    let newSong = currentSongs[songIndex - 1];
+    // console.log(songIndex);
+    let newSong = { ...currentSongs[songIndex - 1] }; //Make a copy
     // TODO: Set a more pleasently-looking arrangement
-    newSong["screenPosition"] = [
-      gridOrigin[0] + i * (BOXSIZE + 10), //5 as padding
-      gridOrigin[1],
-      0,
-    ];
+    // newSong["screenPosition"] = [
+    //   gridOrigin[0] + i * (BOXSIZE + 10), //5 as padding
+    //   gridOrigin[1],
+    //   0,
+    // ];
+    if (!board || i >= board.get("lastPositions").length) {
+      let x = Math.floor(i / 3);
+      let y = i % 3;
+      newSong["screenPosition"] = getBoxPositionGrid(x, y, 3, 3);
+    } else {
+      //If board was already drawn, remember the last positions
+      newSong["screenPosition"] = board.get("lastPositions")[i];
+    }
     songs.push(newSong);
   }
+  console.log(`#songs: ${songs.length}`);
   gameState.setSongs(songs);
-  setupBoxesUI(songs);
+  setupBoxesUI(songs); //draws the new boxes to UI
+  if (shouldDrawCursor) {
+    drawCursor();
+  }
 
+  resetSound();
   // create the current Songs
   let audioPaths = chosenIndices
     .map((i) => currentSongs[i - 1])
@@ -290,8 +322,11 @@ function sendCurrentSongs() {
 }
 function addSong(displayName, audioPath) {
   currentSongs.push({ displayName, audioPath });
-  updateChooseUI();
-  stateFeedback.innerText = "Say continue to go to the next round";
+  //Close and open again to update modal
+  songSelectorDialog.close();
+  chosenSongFromDialog(currSelectedBox);
+  // updateChooseUI();
+  // stateFeedback.innerText = "Say continue to go to the next round";
 }
 let NUMBER_NAMES = {
   zero: 0,
@@ -299,9 +334,13 @@ let NUMBER_NAMES = {
   two: 2,
   to: 2, //seems to help
   three: 3,
+  tree: 3, //seems to help
   four: 4,
   for: 4, //seems to help
   five: 5,
+  fire: 5, //seems to help
+  fight: 5, //seems to help
+  fun: 5, //seems to help
   six: 6,
   seven: 7,
   eight: 8,
@@ -353,7 +392,74 @@ function setupPlayground() {
   resetSound();
   createPhraseSounds(audioPaths, timestamps, words);
 }
+
+//To save thelast index of the selected song for a given box
+let currSelectedBox;
+let currSelectedSong;
+/**
+ * Opens dialog for song choosing
+ * When confirming, it sets the chosen song as part of the chosen box
+ * @param {int} i the index of the box that triggered this modal
+ *
+ */
+function chosenSongFromDialog(i) {
+  console.log("Opening!");
+  console.log(currentSongs);
+  songSelectorContainer.innerHTML = ""; //empty the song choices
+  dialogFeedback.innerHTML = "";
+  // Update the choices with the current songs info
+  currentSongs.forEach(({ displayName, audioPath }, i) => {
+    // let borderColor = chosenIndices.indexOf(i + 1) !== -1 ? "yellow" : "white";
+    let borderColor = "white";
+    let newHTML = `
+    <div song-id="${
+      i + 1
+    }" style="display:flex;flex-direction:column;align-items:center; margin: 2px; padding: 2px; border-radius:20px;">
+      <span><strong>#${i + 1}: ${displayName}</strong></span>
+      <audio audio-id=${i + 1} src=${audioPath} controls></audio>
+    </div>
+    `;
+    songSelectorContainer.insertAdjacentHTML("beforeend", newHTML);
+
+    let createdContainer = songSelectorContainer.querySelector(
+      `[song-id='${i + 1}']`
+    );
+    createdContainer.addEventListener("click", (evt) => {
+      //Clear chosen styles of everyone first
+      chooseGivenSong(i + 1);
+    });
+  });
+  // let
+  // songSelectorDialog.addEventListener("close", function onClose() {
+  //   let chosenIndex = songSelectorDialog.returnValue;
+  //   chosenIndices[i - 1] = chosenIndex;
+  //   sendCurrentSongs();
+  // });
+  // dialogInstructions.showModal();
+  songSelectorDialog.showModal();
+}
+/**
+ * Chooses the given song as the chosen song for the box
+ * @param {*} i 1-indexed
+ */
+function chooseGivenSong(i) {
+  //Clear chosen styles of everyone first
+  songSelectorContainer
+    .querySelectorAll("[song-id]")
+    .forEach((container) => container.classList.remove("option-chosen"));
+  // Add to the chosen ones
+  songSelectorContainer
+    .querySelector(`[song-id='${i}']`)
+    .classList.add("option-chosen");
+  // songSelectorConfirmBtn.value = i;
+  currSelectedSong = i;
+}
 function processSpeech(transcript) {
+  stateFeedback.innerText = ""; //Reset
+
+  console.log(`Transcript = ${transcript}`);
+  let processed = false; //Whether the speech was procesed or not
+
   let userSaid = function (commands, ignoreCase = true) {
     let str = transcript;
     let curr_str = ignoreCase ? str.toLowerCase() : str;
@@ -366,7 +472,81 @@ function processSpeech(transcript) {
     }
     return false;
   };
-  let processed = false;
+
+  if (songSelectorDialog.open) {
+    let USE_AUDIO = false; //whether to use audio for playing/selecting audio
+    console.log("Dialog is open");
+
+    if (gameState.get("state") !== "mix") {
+      console.log("[ERROR] The dialog can only be opened in the mix state");
+    }
+    if (USE_AUDIO && userSaid(["play"])) {
+      console.log("Trying to play...", transcript);
+      //Assumed that it said 'play audio i'
+      let words = transcript.split(" ");
+      let i = getNumber(words[words.length - 1]);
+      console.log(i);
+      if (!isNaN(i) && i != null && i <= currentSongs.length) {
+        console.log(`[audio-id="${i}"]`);
+        songSelectorContainer.querySelector(`[audio-id="${i}"]`).play();
+      }
+    } else if (USE_AUDIO && userSaid(["select", "choose", "shoes"])) {
+      //Assumed that it said "select i"
+      let words = transcript.split(" ");
+      let i = getNumber(words[words.length - 1]);
+      //Only add new numbers
+      if (!isNaN(i) && i !== null && i <= currentSongs.length) {
+        chooseGivenSong(i);
+        // songSelectorContainer.querySelector(`[audio-id="${i}"]`).play();
+        // console.log(i);
+        // chosenIndices.push(i);
+      }
+      // updateChooseUI();
+    } else if (userSaid(["record"])) {
+      //Record from microphone and add it to the playlist
+      console.log("start to record");
+      //There should be a better way to do this: Maybe using async/await
+      //Not sure if processSpeech can be async tho
+      dialogFeedback.innerText = "You will start recording in 5s... get ready!";
+      sleep(1000).then(() => {
+        dialogFeedback.innerText =
+          "You will start recording in 4s... get ready!";
+        sleep(1000).then(() => {
+          dialogFeedback.innerText =
+            "You will start recording in 3s... get ready!";
+          sleep(1000).then(() => {
+            dialogFeedback.innerText =
+              "You will start recording in 2s... get ready!";
+            sleep(1000).then(() => {
+              dialogFeedback.innerText =
+                "You will start recording in 1s... get ready!";
+              sleep(1000).then(() => {
+                dialogFeedback.innerText = "Recording...";
+                //save to assets/recordings/ and created
+                //new object in currentSongs
+                record("test.mp3");
+              });
+            });
+          });
+        });
+      });
+    } else if (userSaid(["confirm", "concern"])) {
+      if (!currSelectedSong) {
+        console.log(
+          "[ERROR] Has confirmed without selecting a song, just cancelling"
+        );
+      }
+      chosenIndices[currSelectedBox - 1] = currSelectedSong;
+      sendCurrentSongs();
+      songSelectorDialog.close();
+      // dialogInstructions.close();
+    } else if (userSaid(["cancel"])) {
+      songSelectorDialog.close();
+    }
+    // The other speech commands are not available when the dialog is open
+    return processed;
+  }
+
   console.log(gameState.get("state"));
   if (gameState.get("state") === "intro") {
     if (userSaid(["play", "phrase", "maker"])) {
@@ -378,10 +558,11 @@ function processSpeech(transcript) {
         sendCurrentPhraseSongs();
       });
     }
-    if (userSaid(["mix", "music"])) {
+    if (userSaid(["mix", "music", "make"])) {
       optionMix.classList.add("option-chosen");
       sleep(1000).then(() => {
-        gameState.setState("choose");
+        document.body.setAttribute("mix-mode", "dragging");
+        gameState.setState("mix");
         stateFeedback.innerText = "Lets mix some music...";
       });
     }
@@ -400,8 +581,8 @@ function processSpeech(transcript) {
       gameState.setState("play");
     }
   } else if (gameState.get("state") === "play") {
-    if (userSaid(["and", "end", "finish"])) {
-      stateFeedback.innerText = "Going back hoe...";
+    if (userSaid(["finish"])) {
+      stateFeedback.innerText = "Going back home...";
 
       reset();
     } else if (userSaid(["change", "mode"])) {
@@ -418,6 +599,77 @@ function processSpeech(transcript) {
       console.log(playPhrase);
       updatePhraseUI(playPhrase);
       gameState.set("playPhrase", playPhrase);
+    }
+  } else if (gameState.get("state") === "mix") {
+    // Add a new box with a random song in it
+
+    if (userSaid(["new", "create"])) {
+      if (gameState.get("areBoxesReady")) {
+        //If currently playing music, nothing can change
+        stateFeedback.innerText = "Need to change mode!";
+        return;
+      }
+      console.log("adding box");
+      let randomSongIndex = Math.floor(Math.random() * currentSongs.length) + 1; //1-indexed
+      chosenIndices.push(randomSongIndex);
+      sendCurrentSongs();
+      // let newSong = currentSongs[randomSongIndex - 1];
+      // let [x, y] = [
+      //   Math.floor(Math.random() * 3),
+      //   Math.floor(Math.random() * 3),
+      // ];
+      // newSong["screenPosition"] = getBoxPositionGrid(x, y, 3, 3);
+      // console.log(newSong);
+      // addSongUI(newSong);
+    }
+    // Update the song for a given index
+    if (userSaid(["update", "date"])) {
+      if (gameState.get("areBoxesReady")) {
+        //If currently playing music, nothing can change
+        stateFeedback.innerText = "Need to change mode!";
+
+        return;
+      }
+      let words = transcript.split(" ");
+      let i = getNumber(words[words.length - 1]); //1-indexed
+      //Only add new numbers
+      if (!isNaN(i) && i !== null && 1 <= i && i <= chosenIndices.length) {
+        console.log(`Updating box ${i}`);
+        currSelectedBox = i;
+        currSelectedSong = chosenIndices[i - 1];
+        //Trigger the UI, and get a new sound
+        // let newIndex = 1; //TODO: Show a modal for this
+        // lastWordIndex = chosenIndices[i - 1]; // save this info
+        // let newIndex =
+        chosenSongFromDialog(currSelectedBox);
+        chooseGivenSong(currSelectedSong);
+
+        // chosenIndices[i - 1] = newIndex;
+        // sendCurrentSongs();
+      }
+    }
+    if (userSaid(["change", "mode"])) {
+      //Change something on the UI to reflect this
+      if (gameState.get("areBoxesReady")) {
+        // Make the cursor dissapear and
+        // sendCurrentSongs(false); //redraw everything, but without the cursor
+        mixMode.innerText = "Dragging boxes";
+        gameState.set("areBoxesReady", false);
+        document.body.setAttribute("mix-mode", "dragging");
+      } else {
+        // drawCursor();
+        mixMode.innerText = "Making music";
+        gameState.set("areBoxesReady", true);
+        document.body.setAttribute("mix-mode", "making");
+      }
+    }
+    if (userSaid(["record"])) {
+      //TODO: Show time recording
+      recordFromBrowser("recording.mp3");
+    }
+    if (userSaid(["finish"])) {
+      stateFeedback.innerText = "Going back home...";
+      reset();
     }
   } else if (gameState.get("state") === "choose") {
     console.log("enter...");

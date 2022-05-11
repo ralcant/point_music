@@ -133,33 +133,61 @@ let SongBoxSet = Backbone.Collection.extend({ model: SongBox });
 let Board = Backbone.Model.extend({
   initialize: function ({ songs }) {
     let boxes = new SongBoxSet();
+    let positions = [];
     songs.forEach((song) => {
-      let { displayName, audioPath, screenPosition } = song;
-      let isPhrase = song.isPhrase || false;
-      let words = [];
-      let timestamps = [];
-      if (isPhrase) {
-        words = song.words;
-        timestamps = song.timestamps;
-      }
-      let songBox = new SongBox({
-        displayName,
-        audioPath,
-        screenPosition,
-        startPosition: screenPosition,
-        isPhrase: isPhrase,
-        words,
-        timestamps,
-      });
+      let songBox = this.getSongBoxFromObject(song);
+      positions.push(songBox.get("screenPosition"));
       boxes.add(songBox);
     });
     this.set("boxes", boxes);
+    this.set("lastPositions", positions);
+  },
+  /**
+   *
+   * @param {*} song jut an object
+   */
+  getSongBoxFromObject: function (song) {
+    console.log(song);
+    let { displayName, audioPath, screenPosition } = song;
+    let isPhrase = song.isPhrase || false;
+    let words = [];
+    let timestamps = [];
+    if (isPhrase) {
+      words = song.words;
+      timestamps = song.timestamps;
+    }
+    let songBox = new SongBox({
+      displayName,
+      audioPath,
+      screenPosition,
+      startPosition: screenPosition,
+      isPhrase: isPhrase,
+      words,
+      timestamps,
+    });
+    return songBox;
+  },
+  addSong: function (song) {
+    let newSongBox = this.getSongBoxFromObject(song);
+    let prev = this.get("boxes");
+    prev.push(newSongBox);
+    this.set("boxes", prev);
+
+    let positions = this.get("lastPositions");
+    positions.push(newSongBox.get("screenPosition"));
+    this.set("lastPositions", positions);
   },
   reset: function () {
-    this.initialize();
+    this.initialize({ songs: [] });
   },
   outOfBounds: function (box) {
     //To make sure a box is within some given bounds
+    // Same as the ones in setupUI.js
+    // let gridOrigin = [333, 35];
+    //TODO: Calculate in function of viewport's width and height
+    // let boxViewSize = [1000, 500]; //w, h
+    // let [x, y] = this.get("screenPosition");
+
     return false;
   },
   deployBox: function (box) {
@@ -191,8 +219,14 @@ let GameState = Backbone.Model.extend({
     state: "intro", // intro, phraseArrange, choose, arrange, compose
     playPhrase: [],
     lastWordIndex: null,
+    areBoxesReady: false, //in 'mix' state, whether boxes can be dragged
     // wonPhraseGame: false,
     songs: [],
+  },
+  addSong: function (song) {
+    let songs = this.get("songs");
+    songs.push(song);
+    this.set("songs", songs);
   },
   initialize: function ({ state = "intro" }) {
     this.setState(state);

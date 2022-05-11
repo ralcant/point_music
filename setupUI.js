@@ -21,7 +21,7 @@ function resetUI() {
   cursor = new Cursor();
   boxes = [];
   modifiers = [];
-  board;
+  board = null;
   boxObjects = [];
   playPhraseContainer.innerHTML = "";
 }
@@ -61,6 +61,7 @@ function getIntersectingBox(cursor) {
   let screenPosition = cursor.get("screenPosition");
   let intersectingBox = null;
   let allBoxes = board.get("boxes");
+  // console.log(`Looking at ${allBoxes.length}`);
   for (let i = 0; i < allBoxes.length; i++) {
     let songBox = allBoxes.at(i);
     // board.get("boxes").forEach((songBox) => {
@@ -98,55 +99,55 @@ let modifiers = [];
 let board;
 let boxObjects = [];
 
-function test(mainContext) {
-  // let songs = [];
-  // for (let i = 0; i < 5; i++) {
-  //   let displayName = "Display name #" + i;
-  //   let audioPath = "Audio path #" + i;
-  //   let screenPosition = [
-  //     gridOrigin[0] + i * BOXSIZE,
-  //     gridOrigin[1] + i * BOXSIZE,
-  //     0,
-  //   ];
-  //   songs.push({ displayName, audioPath, screenPosition });
-  // }
-  //this songs came from setupLeap
-  let songs = gameState.get("songs");
-  board = new Board({ songs });
-  board.get("boxes").forEach((songBox) => {
-    let htmlContent = `
-      <div>
-        <p>displayName: ${songBox.get("displayName")}</p>
-        // <p>audioPath: ${songBox.get("audioPath")}</p>
-      </div>
-    `;
-    let box = new Surface({
-      size: [BOXSIZE, BOXSIZE],
-      content: htmlContent,
-      properties: {
-        backgroundColor: Colors.GREY,
-        color: "white",
-        border: "solid 1px black",
-      },
-    });
-    let boxTranslateModifier = new Modifier({
-      transform: function () {
-        let boxPosition = [...this.get("screenPosition")]; //making a copy
-        return Transform.translate(boxPosition[0], boxPosition[1], 0);
-      }.bind(songBox),
-    });
-    // let boxResizeModifier = new Modifier({
-    //   transform: function () {
-    //     let boxPosition = [...this.get("screenPosition")]; //making a copy
-    //     // return Transform.translate(boxPosition[0], boxPosition[1], 0);
-    //     return Transform.rescale([2, 2, 1]);
-    //   }.bind(songBox),
-    // });
-    mainContext.add(boxTranslateModifier).add(box);
-    boxObjects.push(box);
-  });
-}
-function drawCursor(center) {
+// function test(mainContext) {
+//   // let songs = [];
+//   // for (let i = 0; i < 5; i++) {
+//   //   let displayName = "Display name #" + i;
+//   //   let audioPath = "Audio path #" + i;
+//   //   let screenPosition = [
+//   //     gridOrigin[0] + i * BOXSIZE,
+//   //     gridOrigin[1] + i * BOXSIZE,
+//   //     0,
+//   //   ];
+//   //   songs.push({ displayName, audioPath, screenPosition });
+//   // }
+//   //this songs came from setupLeap
+//   let songs = gameState.get("songs");
+//   board = new Board({ songs });
+//   board.get("boxes").forEach((songBox) => {
+//     let htmlContent = `
+//       <div>
+//         <p>displayName: ${songBox.get("displayName")}</p>
+//         // <p>audioPath: ${songBox.get("audioPath")}</p>
+//       </div>
+//     `;
+//     let box = new Surface({
+//       size: [BOXSIZE, BOXSIZE],
+//       content: htmlContent,
+//       properties: {
+//         backgroundColor: Colors.GREY,
+//         color: "white",
+//         border: "solid 1px black",
+//       },
+//     });
+//     let boxTranslateModifier = new Modifier({
+//       transform: function () {
+//         let boxPosition = [...this.get("screenPosition")]; //making a copy
+//         return Transform.translate(boxPosition[0], boxPosition[1], 0);
+//       }.bind(songBox),
+//     });
+//     // let boxResizeModifier = new Modifier({
+//     //   transform: function () {
+//     //     let boxPosition = [...this.get("screenPosition")]; //making a copy
+//     //     // return Transform.translate(boxPosition[0], boxPosition[1], 0);
+//     //     return Transform.rescale([2, 2, 1]);
+//     //   }.bind(songBox),
+//     // });
+//     mainContext.add(boxTranslateModifier).add(box);
+//     boxObjects.push(box);
+//   });
+// }
+function drawCursor(center = [0, 0]) {
   //Draw the cursor (with image)
   let cursorSurface = new ImageSurface({
     size: [2 * CURSORRADIUS, 2 * CURSORRADIUS],
@@ -178,37 +179,73 @@ function drawCursor(center) {
   mainContext.add(cursorOriginModifier).add(cursorModifier).add(cursorSurface);
   cursor.setScreenPosition(center);
 }
-function setupBoxesUI(songs) {
-  mainContext = Engine.createContext();
 
-  // First: Add the songs
-  board = new Board({ songs });
-  board.get("boxes").forEach((songBox) => {
-    //TODO: Make this a CSS Class
-    let htmlContent = `
+function getBoxAndModifier(songBox, i) {
+  //TODO: Make this a CSS Class
+  let htmlContent = `
       <div style="display:flex;justify-content:center;align-items:center;flex-direction:column; width: 100%; height:100%;">
+        <h2>Box #${i + 1}</h2>
         <p>${songBox.get("displayName")}</p>
       </div>
     `;
-    let box = new Surface({
-      size: [BOXSIZE, BOXSIZE],
-      content: htmlContent,
-      properties: {
-        backgroundColor: Colors.GREY,
-        color: "white",
-        border: "solid 1px black",
-        textAlign: "center",
-        padding: "5px",
-      },
-    });
-    let boxTranslateModifier = new Modifier({
-      transform: function () {
-        let boxPosition = [...this.get("screenPosition")]; //making a copy
-        return Transform.translate(boxPosition[0], boxPosition[1], 0);
-      }.bind(songBox),
-    });
-    mainContext.add(boxTranslateModifier).add(box);
-    boxObjects.push(box);
+  let box = new Surface({
+    size: [BOXSIZE, BOXSIZE],
+    content: htmlContent,
+    properties: {
+      backgroundColor: Colors.GREY,
+      color: "white",
+      border: "solid 1px black",
+      textAlign: "center",
+      padding: "5px",
+    },
+  });
+  let boxTranslateModifier = new Modifier({
+    transform: function () {
+      let boxPosition = [...this.get("screenPosition")]; //making a copy
+      return Transform.translate(boxPosition[0], boxPosition[1], 0);
+    }.bind(songBox),
+  });
+
+  return [box, boxTranslateModifier];
+}
+function addSongUI(song) {
+  if (!board) {
+    board = new Board({ songs: [] });
+  }
+  if (!mainContext) {
+    mainContext = Engine.createContext();
+  }
+  board.addSong(song); //First add to our board (abstract)
+  let total = board.get("boxes").length;
+  console.log(board.get("boxes"));
+
+  let songBox = board.get("boxes").at(total - 1);
+  let [boxSurface, boxModifier] = getBoxAndModifier(songBox, total - 1);
+  //Adding to UI
+  mainContext.add(boxModifier).add(boxSurface);
+  boxObjects.push(boxSurface);
+}
+function setupBoxesUI(songs) {
+  // if (!board) {
+  //   board = new Board({ songs });
+  // } else {
+  //   console.warn("This operation will rewrite the current boxes that existed");
+  // }
+  board = new Board({ songs });
+
+  // if (!mainContext) {
+  mainContext = Engine.createContext();
+  // }
+  console.log(songs);
+  // mainContext = Engine.createContext();
+  boxObjects = [];
+
+  // First: Add the songs
+  console.log(`# in boxes to be drawn: ${board.get("boxes").length}`);
+  board.get("boxes").forEach((songBox, i) => {
+    let [boxSurface, boxModifier] = getBoxAndModifier(songBox, i);
+    mainContext.add(boxModifier).add(boxSurface);
+    boxObjects.push(boxSurface);
   });
   return;
 
@@ -279,4 +316,6 @@ export {
   changeBoxSize,
   resetUI,
   drawCursor,
+  addSongUI,
+  board,
 };

@@ -5,6 +5,12 @@ body {
   height: 100vh;
   margin: 0;
 }
+body[mix-mode="dragging"] {
+  background-color: lightcoral;
+}
+body[mix-mode="making"] {
+  background-color: lightgreen;
+}
 #speechFeedbackContainer {
   position: absolute;
   bottom: 0;
